@@ -1,0 +1,21 @@
+start module; mypvt
+    # Library buatan sendiri — korelasi PVT sederhana.
+    # Simpan sebagai lib/mypvt.mik, panggil dengan: lib mypvt
+
+    # Gas oil ratio (Standing, disederhanakan)
+    func gor_standing(pressure, temp, api, gas_grav)
+        var x = 0.0125 * api - 0.00091 * temp
+        return gas_grav * pow(pressure / 18.2 + 1.4, 1.2048) * pow(10.0, x)
+    end func
+
+    # Oil formation volume factor (Standing)
+    func bo_standing(rs, gas_grav, oil_grav, temp)
+        var t = rs * sqrt(gas_grav / oil_grav) + 1.25 * temp
+        return 0.9759 + 0.00012 * pow(t, 1.2)
+    end func
+
+    # Konversi API ke specific gravity
+    func api_to_sg(api)
+        return 141.5 / (api + 131.5)
+    end func
+end modul
