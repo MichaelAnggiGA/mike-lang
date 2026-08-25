@@ -1,0 +1,26 @@
+{
+  "name": "mike-lang",
+  "displayName": "Mike Language",
+  "description": "Syntax highlighting untuk bahasa pemrograman Mike (.mik)",
+  "version": "0.1.0",
+  "publisher": "safetest-dev",
+  "engines": { "vscode": "^1.50.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mike",
+        "aliases": ["Mike", "mike"],
+        "extensions": [".mik"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mike",
+        "scopeName": "source.mike",
+        "path": "./syntaxes/mike.tmLanguage.json"
+      }
+    ]
+  }
+}
