@@ -1,0 +1,34 @@
+# Mike language syntax highlighting for nano
+# Pasang: lihat editor/README_EDITOR.md
+#
+# Aktifkan dengan menambahkan baris ini ke ~/.nanorc :
+#     include "/path/ke/mike.nanorc"
+
+syntax "mike" "\.mik$"
+
+# komentar (# sampai akhir baris) — abu-abu
+color brightblack "#.*$"
+
+# string dalam tanda kutip — hijau
+color green "\"([^\"\\]|\\.)*\""
+
+# angka — magenta
+color magenta "\<[0-9]+\.?[0-9]*([eE][-+]?[0-9]+)?\>"
+
+# keyword struktur — kuning terang
+color brightyellow "\<(start|module|modul|end)\>"
+
+# keyword kontrol — biru terang
+color brightblue "\<(if|else|while|for|to|return)\>"
+
+# deklarasi — cyan
+color brightcyan "\<(func|var|lib|asm)\>"
+
+# operator logika — merah
+color brightred "\<(and|or|not)\>"
+
+# builtin I/O & fungsi bawaan — hijau terang
+color brightgreen "\<(print|input|array|sqrt|exp|ln|log10|sin|cos|tan|floor|ceil|abs|pow|random|seed|rand_range|gauss|csv_load|csv_rows|file_open|file_str|file_num|file_close|put_char|put_str|put_num)\>"
+
+# operator — putih
+color white "[-+*/%<>=!]"
