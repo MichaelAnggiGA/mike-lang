@@ -1,0 +1,13 @@
+start module; hitung
+    lib input/output
+    lib mypvt          # <-- library buatan sendiri, dipanggil seperti library bawaan
+
+    func main()
+        print "=== Pakai library PVT buatan sendiri ==="
+        print "SG dari API 35:"
+        print api_to_sg(35.0)
+        print "GOR (P=2000, T=180, API=35, gas grav=0.7):"
+        print gor_standing(2000.0, 180.0, 35.0, 0.7)
+        return 0
+    end func
+end modul
