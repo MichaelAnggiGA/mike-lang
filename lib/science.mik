@@ -1,0 +1,164 @@
+start module; science
+    # ============================================================
+    #  lib science — physical constants and unit conversions.
+    #  Constants are functions (Mike has no global constants yet),
+    #  so call them: c()  R_gas()  etc. SI units unless noted.
+    # ============================================================
+
+    # ---- fundamental physical constants (SI) ----
+
+    func c()               # speed of light, m/s
+        return 299792458.0
+    end func
+
+    func g_earth()         # standard gravity, m/s^2
+        return 9.80665
+    end func
+
+    func avogadro()        # 1/mol
+        return 6.02214076e23
+    end func
+
+    func R_gas()           # universal gas constant, J/(mol*K)
+        return 8.314462618
+    end func
+
+    func boltzmann()       # J/K
+        return 1.380649e-23
+    end func
+
+    func planck()          # J*s
+        return 6.62607015e-34
+    end func
+
+    func elementary_charge()   # C
+        return 1.602176634e-19
+    end func
+
+    func stefan_boltzmann()    # W/(m^2*K^4)
+        return 5.670374419e-8
+    end func
+
+    func gravitation()     # G, m^3/(kg*s^2)
+        return 6.67430e-11
+    end func
+
+    func atm_pressure()    # standard atmosphere, Pa
+        return 101325.0
+    end func
+
+    # ---- temperature conversions ----
+
+    func c_to_f(celsius)
+        return celsius * 9.0 / 5.0 + 32.0
+    end func
+
+    func f_to_c(fahrenheit)
+        return (fahrenheit - 32.0) * 5.0 / 9.0
+    end func
+
+    func c_to_k(celsius)
+        return celsius + 273.15
+    end func
+
+    func k_to_c(kelvin)
+        return kelvin - 273.15
+    end func
+
+    func f_to_k(fahrenheit)
+        return c_to_k(f_to_c(fahrenheit))
+    end func
+
+    # ---- pressure conversions ----
+
+    func psi_to_pa(psi)
+        return psi * 6894.757293
+    end func
+
+    func pa_to_psi(pa)
+        return pa / 6894.757293
+    end func
+
+    func psi_to_bar(psi)
+        return psi * 0.0689475729
+    end func
+
+    func bar_to_psi(bar)
+        return bar / 0.0689475729
+    end func
+
+    func bar_to_pa(bar)
+        return bar * 100000.0
+    end func
+
+    func atm_to_psi(atm)
+        return atm * 14.6959488
+    end func
+
+    # ---- length conversions ----
+
+    func ft_to_m(ft)
+        return ft * 0.3048
+    end func
+
+    func m_to_ft(m)
+        return m / 0.3048
+    end func
+
+    func inch_to_cm(inch)
+        return inch * 2.54
+    end func
+
+    func mile_to_km(mile)
+        return mile * 1.609344
+    end func
+
+    # ---- volume conversions (petroleum-relevant) ----
+
+    func bbl_to_m3(bbl)                 # oil barrel -> cubic meters
+        return bbl * 0.158987294928
+    end func
+
+    func m3_to_bbl(m3)
+        return m3 / 0.158987294928
+    end func
+
+    func bbl_to_ft3(bbl)               # barrel -> cubic feet
+        return bbl * 5.614583333
+    end func
+
+    func gal_to_liter(gal)             # US gallon -> liter
+        return gal * 3.785411784
+    end func
+
+    # ---- mass conversions ----
+
+    func lb_to_kg(lb)
+        return lb * 0.45359237
+    end func
+
+    func kg_to_lb(kg)
+        return kg / 0.45359237
+    end func
+
+    # ---- energy / power ----
+
+    func hp_to_watt(hp)                # mechanical horsepower
+        return hp * 745.699872
+    end func
+
+    func btu_to_joule(btu)
+        return btu * 1055.05585
+    end func
+
+    # ---- ideal gas law helper: PV = nRT ----
+    #  solve for pressure given n (mol), T (K), V (m^3)
+    func ideal_gas_pressure(n, temp_k, volume)
+        return n * R_gas() * temp_k / volume
+    end func
+
+    # solve for moles given P (Pa), V (m^3), T (K)
+    func ideal_gas_moles(pressure, volume, temp_k)
+        return pressure * volume / (R_gas() * temp_k)
+    end func
+end modul

@@ -1,0 +1,165 @@
+start module; numeric
+    # ============================================================
+    #  lib numeric — numerical methods: root finding, integration,
+    #  differentiation, interpolation, ODE solving.
+    #
+    #  Mike has no function pointers yet, so routines that need "a
+    #  function f(x)" come in two flavors:
+    #   - generic versions that evaluate a named user function `f`
+    #     (you edit the call site), OR
+    #   - table-based versions that work on sampled data arrays.
+    #  Where a routine needs f(x), it calls a function you must
+    #  provide named `f` in your program. See numeric examples.
+    # ============================================================
+
+    # ---- root finding (bisection) on user function f(x) ----
+    # Requires: a function `f(x)` defined in the caller's program.
+    # Finds a root in [a,b] where f(a) and f(b) have opposite signs.
+    func bisection(a, b, iters)
+        var lo = a
+        var hi = b
+        var flo = f(lo)
+        var i = 0
+        while i < iters
+            var mid = (lo + hi) / 2.0
+            var fm = f(mid)
+            if flo * fm <= 0.0
+                hi = mid
+            else
+                lo = mid
+                flo = fm
+            end if
+            i = i + 1
+        end while
+        return (lo + hi) / 2.0
+    end func
+
+    # ---- Newton-Raphson on user function f(x) ----
+    # Uses numerical derivative, so you only need to provide `f`.
+    func newton(x0, iters)
+        var x = x0
+        var h = 0.0000001
+        var i = 0
+        while i < iters
+            var fx = f(x)
+            var dfx = (f(x + h) - f(x - h)) / (2.0 * h)
+            x = x - fx / dfx
+            i = i + 1
+        end while
+        return x
+    end func
+
+    # ---- numerical derivative of f at x (central difference) ----
+    func derivative(x, h)
+        return (f(x + h) - f(x - h)) / (2.0 * h)
+    end func
+
+    # second derivative
+    func derivative2(x, h)
+        return (f(x + h) - 2.0 * f(x) + f(x - h)) / (h * h)
+    end func
+
+    # ---- integration of f over [a,b] ----
+
+    # trapezoidal rule with n subintervals
+    func integrate_trap(a, b, n)
+        var h = (b - a) / n
+        var s = (f(a) + f(b)) / 2.0
+        var i = 1
+        while i < n
+            s = s + f(a + i * h)
+            i = i + 1
+        end while
+        return s * h
+    end func
+
+    # Simpson's rule with n subintervals (n should be even)
+    func integrate_simpson(a, b, n)
+        var h = (b - a) / n
+        var s = f(a) + f(b)
+        var i = 1
+        while i < n
+            var x = a + i * h
+            if i % 2 == 1
+                s = s + 4.0 * f(x)
+            else
+                s = s + 2.0 * f(x)
+            end if
+            i = i + 1
+        end while
+        return s * h / 3.0
+    end func
+
+    # ---- integration of SAMPLED data (arrays) ----
+    # trapezoidal integration of y[] sampled at uniform spacing dx
+    func integrate_data(y, n, dx)
+        var s = (y[0] + y[n - 1]) / 2.0
+        for i = 1 to n - 2
+            s = s + y[i]
+        end for
+        return s * dx
+    end func
+
+    # trapezoidal integration of y[] sampled at (possibly uneven) x[]
+    func integrate_xy(x, y, n)
+        var s = 0.0
+        for i = 0 to n - 2
+            var dx = x[i + 1] - x[i]
+            s = s + (y[i] + y[i + 1]) / 2.0 * dx
+        end for
+        return s
+    end func
+
+    # ---- interpolation ----
+
+    # linear interpolation: value at xq given sorted x[], y[]
+    func interp_linear(x, y, n, xq)
+        if xq <= x[0]
+            return y[0]
+        end if
+        if xq >= x[n - 1]
+            return y[n - 1]
+        end if
+        var i = 0
+        while x[i + 1] < xq
+            i = i + 1
+        end while
+        var t = (xq - x[i]) / (x[i + 1] - x[i])
+        return y[i] + t * (y[i + 1] - y[i])
+    end func
+
+    # ---- ODE solving: dy/dx = ode(x, y) ----
+    # Requires a function `ode(x, y)` in the caller. Returns y at x_end.
+
+    # Euler's method
+    func ode_euler(x0, y0, x_end, steps)
+        var x = x0
+        var y = y0
+        var h = (x_end - x0) / steps
+        var i = 0
+        while i < steps
+            y = y + h * ode(x, y)
+            x = x + h
+            i = i + 1
+        end while
+        return y
+    end func
+
+    # 4th-order Runge-Kutta (much more accurate)
+    func ode_rk4(x0, y0, x_end, steps)
+        var x = x0
+        var y = y0
+        var h = (x_end - x0) / steps
+        var i = 0
+        while i < steps
+            var k1 = ode(x, y)
+            var k2 = ode(x + h / 2.0, y + h / 2.0 * k1)
+            var k3 = ode(x + h / 2.0, y + h / 2.0 * k2)
+            var k4 = ode(x + h, y + h * k3)
+            y = y + h / 6.0 * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+            x = x + h
+            i = i + 1
+        end while
+        return y
+    end func
+end modul

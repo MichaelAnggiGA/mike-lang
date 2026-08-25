@@ -1,0 +1,203 @@
+start module; linalg
+    # ============================================================
+    #  lib linalg — linear algebra: solve Ax=b, invert, determinant
+    #  for general n x n systems. Matrices are flat row-major arrays
+    #  (element (i,j) at i*n + j), same convention as lib matrix.
+    #
+    #  These routines modify their inputs (in-place elimination), so
+    #  pass copies if you need the originals afterward.
+    # ============================================================
+
+    # element access on an n-column flat matrix
+    func get(m, n, i, j)
+        return m[i * n + j]
+    end func
+
+    func set(m, n, i, j, v)
+        m[i * n + j] = v
+        return v
+    end func
+
+    # ---- solve A x = b for an n x n system (Gaussian elimination
+    #      with partial pivoting). A is n*n flat, b is length n.
+    #      Solution is written into x. A and b are modified. ----
+    func solve(a, b, x, n)
+        # forward elimination with partial pivoting
+        for k = 0 to n - 1
+            # find pivot row (largest |a[i][k]|)
+            var pivot = k
+            var maxval = abs(get(a, n, k, k))
+            for i = k + 1 to n - 1
+                var v = abs(get(a, n, i, k))
+                if v > maxval
+                    maxval = v
+                    pivot = i
+                end if
+            end for
+            # swap rows k and pivot (in a and b)
+            if pivot != k
+                for j = 0 to n - 1
+                    var tmp = get(a, n, k, j)
+                    set(a, n, k, j, get(a, n, pivot, j))
+                    set(a, n, pivot, j, tmp)
+                end for
+                var tb = b[k]
+                b[k] = b[pivot]
+                b[pivot] = tb
+            end if
+            # eliminate below
+            for i = k + 1 to n - 1
+                var factor = get(a, n, i, k) / get(a, n, k, k)
+                for j = k to n - 1
+                    var nv = get(a, n, i, j) - factor * get(a, n, k, j)
+                    set(a, n, i, j, nv)
+                end for
+                b[i] = b[i] - factor * b[k]
+            end for
+        end for
+        # back substitution
+        var row = n - 1
+        while row >= 0
+            var s = b[row]
+            for j = row + 1 to n - 1
+                s = s - get(a, n, row, j) * x[j]
+            end for
+            x[row] = s / get(a, n, row, row)
+            row = row - 1
+        end while
+        return 0
+    end func
+
+    # ---- determinant of an n x n matrix via LU-style elimination.
+    #      Works on a copy so the input is preserved. ----
+    func determinant(src, n)
+        # copy src into a working matrix
+        var a = array(n * n)
+        for i = 0 to n * n - 1
+            a[i] = src[i]
+        end for
+        var det = 1.0
+        for k = 0 to n - 1
+            # partial pivot
+            var pivot = k
+            var maxval = abs(get(a, n, k, k))
+            for i = k + 1 to n - 1
+                var v = abs(get(a, n, i, k))
+                if v > maxval
+                    maxval = v
+                    pivot = i
+                end if
+            end for
+            if pivot != k
+                for j = 0 to n - 1
+                    var tmp = get(a, n, k, j)
+                    set(a, n, k, j, get(a, n, pivot, j))
+                    set(a, n, pivot, j, tmp)
+                end for
+                det = 0.0 - det
+            end if
+            var diag = get(a, n, k, k)
+            if diag == 0.0
+                return 0.0
+            end if
+            det = det * diag
+            for i = k + 1 to n - 1
+                var factor = get(a, n, i, k) / diag
+                for j = k to n - 1
+                    var nv = get(a, n, i, j) - factor * get(a, n, k, j)
+                    set(a, n, i, j, nv)
+                end for
+            end for
+        end for
+        return det
+    end func
+
+    # ---- inverse of an n x n matrix via Gauss-Jordan.
+    #      src preserved; result written into `inv` (n*n flat). ----
+    func inverse(src, inv, n)
+        # augmented working copy of src
+        var a = array(n * n)
+        for i = 0 to n * n - 1
+            a[i] = src[i]
+        end for
+        # start inv as identity
+        for i = 0 to n - 1
+            for j = 0 to n - 1
+                if i == j
+                    set(inv, n, i, j, 1.0)
+                else
+                    set(inv, n, i, j, 0.0)
+                end if
+            end for
+        end for
+        # Gauss-Jordan
+        for k = 0 to n - 1
+            # pivot
+            var pivot = k
+            var maxval = abs(get(a, n, k, k))
+            for i = k + 1 to n - 1
+                var v = abs(get(a, n, i, k))
+                if v > maxval
+                    maxval = v
+                    pivot = i
+                end if
+            end for
+            if pivot != k
+                for j = 0 to n - 1
+                    var t1 = get(a, n, k, j)
+                    set(a, n, k, j, get(a, n, pivot, j))
+                    set(a, n, pivot, j, t1)
+                    var t2 = get(inv, n, k, j)
+                    set(inv, n, k, j, get(inv, n, pivot, j))
+                    set(inv, n, pivot, j, t2)
+                end for
+            end if
+            # normalize pivot row
+            var diag = get(a, n, k, k)
+            for j = 0 to n - 1
+                set(a, n, k, j, get(a, n, k, j) / diag)
+                set(inv, n, k, j, get(inv, n, k, j) / diag)
+            end for
+            # eliminate other rows
+            for i = 0 to n - 1
+                if i != k
+                    var factor = get(a, n, i, k)
+                    for j = 0 to n - 1
+                        set(a, n, i, j, get(a, n, i, j) - factor * get(a, n, k, j))
+                        set(inv, n, i, j, get(inv, n, i, j) - factor * get(inv, n, k, j))
+                    end for
+                end if
+            end for
+        end for
+        return 0
+    end func
+
+    # ---- multiple linear regression via normal equations.
+    #      X is (rows x cols) flat, y is length rows.
+    #      Solves (X^T X) beta = X^T y. Writes beta (length cols).
+    #      Include a column of 1s in X for an intercept. ----
+    func multireg(x, y, rows, cols, beta)
+        # build XtX (cols x cols) and Xty (cols)
+        var xtx = array(cols * cols)
+        var xty = array(cols)
+        for i = 0 to cols - 1
+            xty[i] = 0.0
+            for j = 0 to cols - 1
+                set(xtx, cols, i, j, 0.0)
+            end for
+        end for
+        for r = 0 to rows - 1
+            for i = 0 to cols - 1
+                var xri = x[r * cols + i]
+                xty[i] = xty[i] + xri * y[r]
+                for j = 0 to cols - 1
+                    var cur = get(xtx, cols, i, j)
+                    set(xtx, cols, i, j, cur + xri * x[r * cols + j])
+                end for
+            end for
+        end for
+        # solve xtx * beta = xty
+        solve(xtx, xty, beta, cols)
+        return 0
+    end func
+end modul

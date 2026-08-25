@@ -1,0 +1,110 @@
+start module; math
+    # ============================================================
+    #  lib math — mathematical constants and helpers
+    #  (sqrt, exp, ln, sin, cos, pow, floor, ... are compiler builtins;
+    #   this library adds constants and derived functions on top.)
+    # ============================================================
+
+    func pi()
+        return 3.14159265358979323846
+    end func
+
+    func e()
+        return 2.71828182845904523536
+    end func
+
+    func tau()
+        return 6.28318530717958647692
+    end func
+
+    # x^2 and x^3 without calling pow
+    func sq(x)
+        return x * x
+    end func
+
+    func cube(x)
+        return x * x * x
+    end func
+
+    # sign: -1, 0, or 1
+    func sign(x)
+        if x > 0.0
+            return 1.0
+        end if
+        if x < 0.0
+            return -1.0
+        end if
+        return 0.0
+    end func
+
+    # min / max of two values
+    func min2(a, b)
+        if a < b
+            return a
+        end if
+        return b
+    end func
+
+    func max2(a, b)
+        if a > b
+            return a
+        end if
+        return b
+    end func
+
+    # clamp x into [lo, hi]
+    func clamp(x, lo, hi)
+        if x < lo
+            return lo
+        end if
+        if x > hi
+            return hi
+        end if
+        return x
+    end func
+
+    # linear interpolation
+    func lerp(a, b, t)
+        return a + (b - a) * t
+    end func
+
+    # degrees <-> radians
+    func rad(deg)
+        return deg * 3.14159265358979323846 / 180.0
+    end func
+
+    func deg(rad)
+        return rad * 180.0 / 3.14159265358979323846
+    end func
+
+    # round to nearest integer (via floor(x + 0.5))
+    func round(x)
+        return floor(x + 0.5)
+    end func
+
+    # factorial (iterative)
+    func fact(n)
+        var r = 1.0
+        var i = 2.0
+        while i <= n
+            r = r * i
+            i = i + 1.0
+        end while
+        return r
+    end func
+
+    # integer power by repeated multiply (works for negative exponents too)
+    func ipow(base, n)
+        var r = 1.0
+        var k = abs(n)
+        var i = 0.0
+        while i < k
+            r = r * base
+            i = i + 1.0
+        end while
+        if n < 0.0
+            return 1.0 / r
+        end if
+        return r
+    end func
+end modul

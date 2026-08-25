@@ -1,0 +1,153 @@
+start module; mechanic
+    # ============================================================
+    #  lib mechanic — mechanical engineering formulas.
+    #  SI units unless noted (N, m, Pa, W, rad/s).
+    #  Pairs well with lib science for unit conversions.
+    # ============================================================
+
+    # ---- rotational mechanics ----
+
+    # torque from force and moment arm: T = F * r
+    func torque(force, radius)
+        return force * radius
+    end func
+
+    # power from torque and angular velocity: P = T * omega   (W)
+    func power_rot(torque_nm, omega)
+        return torque_nm * omega
+    end func
+
+    # convert RPM to angular velocity (rad/s): omega = 2*pi*rpm/60
+    func rpm_to_rads(rpm)
+        return 6.283185307179586 * rpm / 60.0
+    end func
+
+    func rads_to_rpm(omega)
+        return omega * 60.0 / 6.283185307179586
+    end func
+
+    # power from torque and RPM directly: P = T * 2*pi*N/60
+    func power_from_rpm(torque_nm, rpm)
+        return torque_nm * rpm_to_rads(rpm)
+    end func
+
+    # ---- gears ----
+
+    # gear ratio = driven teeth / driver teeth
+    func gear_ratio(driven_teeth, driver_teeth)
+        return driven_teeth / driver_teeth
+    end func
+
+    # output speed after a gear stage: n_out = n_in / ratio
+    func gear_output_speed(input_speed, ratio)
+        return input_speed / ratio
+    end func
+
+    # output torque after a gear stage: T_out = T_in * ratio
+    func gear_output_torque(input_torque, ratio)
+        return input_torque * ratio
+    end func
+
+    # ---- stress, strain, elasticity ----
+
+    # normal stress: sigma = F / A   (Pa)
+    func stress(force, area)
+        return force / area
+    end func
+
+    # strain: epsilon = deltaL / L0  (dimensionless)
+    func strain(delta_length, original_length)
+        return delta_length / original_length
+    end func
+
+    # Young's modulus: E = stress / strain
+    func youngs_modulus(stress_val, strain_val)
+        return stress_val / strain_val
+    end func
+
+    # elongation from Hooke's law: deltaL = F*L / (A*E)
+    func elongation(force, length, area, e_modulus)
+        return force * length / (area * e_modulus)
+    end func
+
+    # ---- beams (simply supported, point load at center) ----
+
+    # max bending moment: M = P*L/4
+    func beam_moment_center(load, length)
+        return load * length / 4.0
+    end func
+
+    # max deflection: delta = P*L^3 / (48*E*I)
+    func beam_deflection_center(load, length, e_modulus, inertia)
+        return load * length * length * length / (48.0 * e_modulus * inertia)
+    end func
+
+    # area moment of inertia for a rectangular section: I = b*h^3/12
+    func inertia_rect(width, height)
+        return width * height * height * height / 12.0
+    end func
+
+    # area moment of inertia for a solid circular section: I = pi*d^4/64
+    func inertia_circle(diameter)
+        return 3.141592653589793 * pow(diameter, 4.0) / 64.0
+    end func
+
+    # ---- shafts (torsion) ----
+
+    # polar moment of inertia, solid circular shaft: J = pi*d^4/32
+    func polar_inertia(diameter)
+        return 3.141592653589793 * pow(diameter, 4.0) / 32.0
+    end func
+
+    # max shear stress in a shaft: tau = T*r / J
+    func shear_stress(torque_nm, radius, polar_j)
+        return torque_nm * radius / polar_j
+    end func
+
+    # ---- springs & energy ----
+
+    # Hooke's law force: F = k*x
+    func spring_force(k, displacement)
+        return k * displacement
+    end func
+
+    # elastic potential energy in a spring: E = 0.5*k*x^2
+    func spring_energy(k, displacement)
+        return 0.5 * k * displacement * displacement
+    end func
+
+    # kinetic energy: E = 0.5*m*v^2
+    func kinetic_energy(mass, velocity)
+        return 0.5 * mass * velocity * velocity
+    end func
+
+    # potential energy: E = m*g*h  (g = 9.80665)
+    func potential_energy(mass, height)
+        return mass * 9.80665 * height
+    end func
+
+    # ---- fluid mechanics ----
+
+    # Reynolds number: Re = rho*v*D / mu
+    func reynolds(density, velocity, diameter, viscosity)
+        return density * velocity * diameter / viscosity
+    end func
+
+    # volumetric flow rate in a pipe: Q = v * pi*(D/2)^2
+    func flow_rate(velocity, diameter)
+        var r = diameter / 2.0
+        return velocity * 3.141592653589793 * r * r
+    end func
+
+    # ---- simple machines ----
+
+    # mechanical advantage: MA = load / effort
+    func mech_advantage(load, effort)
+        return load / effort
+    end func
+
+    # efficiency (%): output/input * 100
+    func efficiency(output_power, input_power)
+        return output_power / input_power * 100.0
+    end func
+end modul

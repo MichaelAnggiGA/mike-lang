@@ -1,0 +1,222 @@
+start module; crypto
+    # ============================================================
+    #  lib crypto — number theory and educational cryptography.
+    #
+    #  IMPORTANT: Mike uses doubles, exact only up to 2^53. These
+    #  routines are for LEARNING the mathematics of cryptography
+    #  (how RSA/Diffie-Hellman work) with SMALL numbers. They are
+    #  NOT secure and NOT for production — real crypto needs
+    #  big-integer (2048-bit+) arithmetic Mike doesn't have.
+    # ============================================================
+
+    # ---- basic number theory ----
+
+    # greatest common divisor (Euclid)
+    func gcd(a, b)
+        var x = a
+        var y = b
+        while y != 0.0
+            var t = y
+            y = x - floor(x / y) * y      # x mod y
+            x = t
+        end while
+        return x
+    end func
+
+    # least common multiple
+    func lcm(a, b)
+        return a * b / gcd(a, b)
+    end func
+
+    # modulo that works for our doubles: a mod m
+    func mod(a, m)
+        return a - floor(a / m) * m
+    end func
+
+    # ---- modular exponentiation: (base^exp) mod m ----
+    # square-and-multiply; keeps numbers small so it stays exact
+    # as long as m*m < 2^53 (i.e. m < ~94 million).
+    func modpow(base, exp, m)
+        var result = 1.0
+        var b = mod(base, m)
+        var e = exp
+        while e > 0.0
+            var half = floor(e / 2.0)
+            var bit = e - 2.0 * half        # e mod 2
+            if bit == 1.0
+                result = mod(result * b, m)
+            end if
+            b = mod(b * b, m)
+            e = half
+        end while
+        return result
+    end func
+
+    # ---- modular inverse via extended Euclid: a^-1 mod m ----
+    func modinv(a, m)
+        var t = 0.0
+        var newt = 1.0
+        var r = m
+        var newr = mod(a, m)
+        while newr != 0.0
+            var q = floor(r / newr)
+            var tmp = newt
+            newt = t - q * newt
+            t = tmp
+            tmp = newr
+            newr = r - q * newr
+            r = tmp
+        end while
+        if r > 1.0
+            return 0.0            # not invertible
+        end if
+        if t < 0.0
+            t = t + m
+        end if
+        return t
+    end func
+
+    # ---- primality ----
+
+    # trial-division primality test (fine for small n)
+    func is_prime(n)
+        if n < 2.0
+            return 0.0
+        end if
+        if n < 4.0
+            return 1.0
+        end if
+        if mod(n, 2.0) == 0.0
+            return 0.0
+        end if
+        var i = 3.0
+        while i * i <= n
+            if mod(n, i) == 0.0
+                return 0.0
+            end if
+            i = i + 2.0
+        end while
+        return 1.0
+    end func
+
+    # Miller-Rabin single-base test (base a). Returns 1 if n is a
+    # probable prime for this base, 0 if definitely composite.
+    func miller_test(n, a)
+        if n == a
+            return 1.0
+        end if
+        # write n-1 = d * 2^r
+        var d = n - 1.0
+        var r = 0.0
+        while mod(d, 2.0) == 0.0
+            d = d / 2.0
+            r = r + 1.0
+        end while
+        var x = modpow(a, d, n)
+        if x == 1.0
+            return 1.0
+        end if
+        if x == n - 1.0
+            return 1.0
+        end if
+        var i = 1.0
+        while i < r
+            x = mod(x * x, n)
+            if x == n - 1.0
+                return 1.0
+            end if
+            i = i + 1.0
+        end while
+        return 0.0
+    end func
+
+    # Miller-Rabin with a few fixed bases (good for numbers < ~3 million)
+    func is_prime_mr(n)
+        if n < 2.0
+            return 0.0
+        end if
+        if mod(n, 2.0) == 0.0
+            if n == 2.0
+                return 1.0
+            end if
+            return 0.0
+        end if
+        if miller_test(n, 2.0) == 0.0
+            return 0.0
+        end if
+        if miller_test(n, 3.0) == 0.0
+            return 0.0
+        end if
+        if miller_test(n, 5.0) == 0.0
+            return 0.0
+        end if
+        return 1.0
+    end func
+
+    # next prime >= n
+    func next_prime(n)
+        var c = n
+        while is_prime(c) == 0.0
+            c = c + 1.0
+        end while
+        return c
+    end func
+
+    # Euler's totient for a product of two primes p, q
+    func totient_pq(p, q)
+        return (p - 1.0) * (q - 1.0)
+    end func
+
+    # ---- Diffie-Hellman key exchange (educational) ----
+    # public: prime p, generator g. Alice picks secret a, Bob picks b.
+    # shared secret = g^(a*b) mod p, computed by each side independently.
+
+    # a party's public value: g^secret mod p
+    func dh_public(g, secret, p)
+        return modpow(g, secret, p)
+    end func
+
+    # shared secret from the other party's public value
+    func dh_shared(other_public, secret, p)
+        return modpow(other_public, secret, p)
+    end func
+
+    # ---- RSA (educational, tiny keys) ----
+    # keygen: choose primes p,q; n=p*q; phi=(p-1)(q-1); pick e coprime to phi;
+    # d = e^-1 mod phi. Encrypt c = m^e mod n; decrypt m = c^d mod n.
+
+    func rsa_n(p, q)
+        return p * q
+    end func
+
+    # find a small public exponent e coprime with phi (tries 3,5,17,257,65537)
+    func rsa_choose_e(phi)
+        if gcd(3.0, phi) == 1.0
+            return 3.0
+        end if
+        if gcd(5.0, phi) == 1.0
+            return 5.0
+        end if
+        if gcd(17.0, phi) == 1.0
+            return 17.0
+        end if
+        if gcd(257.0, phi) == 1.0
+            return 257.0
+        end if
+        return 65537.0
+    end func
+
+    # private exponent d = e^-1 mod phi
+    func rsa_d(e, phi)
+        return modinv(e, phi)
+    end func
+
+    # encrypt / decrypt a single number (m < n)
+    func rsa_encrypt(m, e, n)
+        return modpow(m, e, n)
+    end func
+
+    func rsa_decrypt(c, d, n)
+        return modpow(c, d, n)
+    end func
+end modul

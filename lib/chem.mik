@@ -1,0 +1,145 @@
+start module; chem
+    # ============================================================
+    #  lib chem — chemistry formulas.
+    #  Moles, gas laws, concentration, pH, thermochemistry.
+    #  Pairs with lib science (R_gas, Avogadro, conversions).
+    # ============================================================
+
+    # ---- Avogadro / moles ----
+
+    func avogadro()
+        return 6.02214076e23
+    end func
+
+    # moles from number of particles: n = N / NA
+    func moles_from_particles(n_particles)
+        return n_particles / avogadro()
+    end func
+
+    # number of particles from moles: N = n * NA
+    func particles_from_moles(moles)
+        return moles * avogadro()
+    end func
+
+    # moles from mass and molar mass: n = m / M
+    func moles(mass, molar_mass)
+        return mass / molar_mass
+    end func
+
+    # mass from moles and molar mass: m = n * M
+    func mass_from_moles(moles_n, molar_mass)
+        return moles_n * molar_mass
+    end func
+
+    # ---- ideal gas law: PV = nRT (R = 8.314462618 J/mol/K) ----
+
+    func R_gas()
+        return 8.314462618
+    end func
+
+    # pressure (Pa) from n, T (K), V (m^3)
+    func gas_pressure(n, temp_k, volume)
+        return n * R_gas() * temp_k / volume
+    end func
+
+    # volume (m^3) from n, T (K), P (Pa)
+    func gas_volume(n, temp_k, pressure)
+        return n * R_gas() * temp_k / pressure
+    end func
+
+    # moles from P, V, T
+    func gas_moles(pressure, volume, temp_k)
+        return pressure * volume / (R_gas() * temp_k)
+    end func
+
+    # temperature (K) from P, V, n
+    func gas_temp(pressure, volume, n)
+        return pressure * volume / (n * R_gas())
+    end func
+
+    # combined gas law: solve for V2 given P1V1/T1 = P2V2/T2
+    func combined_v2(p1, v1, t1, p2, t2)
+        return p1 * v1 * t2 / (t1 * p2)
+    end func
+
+    # ---- concentration ----
+
+    # molarity: M = moles / volume_liters
+    func molarity(moles_n, volume_liters)
+        return moles_n / volume_liters
+    end func
+
+    # moles of solute from molarity and volume
+    func moles_from_molarity(molarity_m, volume_liters)
+        return molarity_m * volume_liters
+    end func
+
+    # dilution: C1*V1 = C2*V2, solve for V1 (volume of stock needed)
+    func dilution_v1(c2, v2, c1)
+        return c2 * v2 / c1
+    end func
+
+    # mass percent: (mass_solute / mass_solution) * 100
+    func mass_percent(mass_solute, mass_solution)
+        return mass_solute / mass_solution * 100.0
+    end func
+
+    # parts per million: (mass_solute / mass_solution) * 1e6
+    func ppm(mass_solute, mass_solution)
+        return mass_solute / mass_solution * 1000000.0
+    end func
+
+    # ---- pH / acids & bases ----
+
+    # pH from hydrogen ion concentration: pH = -log10[H+]
+    func ph(h_concentration)
+        return 0.0 - log10(h_concentration)
+    end func
+
+    # [H+] from pH: [H+] = 10^(-pH)
+    func h_from_ph(ph_val)
+        return pow(10.0, 0.0 - ph_val)
+    end func
+
+    # pOH from pH: pOH = 14 - pH
+    func poh(ph_val)
+        return 14.0 - ph_val
+    end func
+
+    # [OH-] from pOH
+    func oh_from_poh(poh_val)
+        return pow(10.0, 0.0 - poh_val)
+    end func
+
+    # ---- thermochemistry ----
+
+    # heat energy: q = m * c * deltaT   (c = specific heat J/g/K)
+    func heat(mass, specific_heat, delta_temp)
+        return mass * specific_heat * delta_temp
+    end func
+
+    # solve for delta T given q, m, c
+    func delta_temp(heat_q, mass, specific_heat)
+        return heat_q / (mass * specific_heat)
+    end func
+
+    # ---- reaction rate (Arrhenius) ----
+
+    # rate constant: k = A * exp(-Ea/(R*T))
+    #   Ea in J/mol, T in K
+    func arrhenius(a_factor, ea, temp_k)
+        return a_factor * exp(0.0 - ea / (R_gas() * temp_k))
+    end func
+
+    # ---- misc ----
+
+    # percent yield: (actual / theoretical) * 100
+    func percent_yield(actual, theoretical)
+        return actual / theoretical * 100.0
+    end func
+
+    # density: rho = mass / volume
+    func density(mass, volume)
+        return mass / volume
+    end func
+end modul

@@ -1,0 +1,91 @@
+start module; geometry
+    # ============================================================
+    #  lib geometry — 2D/3D vector and geometric helpers.
+    #  Vectors are passed as component values or small arrays.
+    # ============================================================
+
+    # ---- 2D ----
+
+    func dist2(x1, y1, x2, y2)
+        var dx = x2 - x1
+        var dy = y2 - y1
+        return sqrt(dx * dx + dy * dy)
+    end func
+
+    func dot2(ax, ay, bx, by)
+        return ax * bx + ay * by
+    end func
+
+    func mag2(x, y)
+        return sqrt(x * x + y * y)
+    end func
+
+    # 2D cross product (scalar): ax*by - ay*bx
+    func cross2(ax, ay, bx, by)
+        return ax * by - ay * bx
+    end func
+
+    # angle of vector (x,y) from +x axis, using tan/cos identities.
+    # returns radians via atan approximation: angle = atan2 built from cos/sin.
+    # (Mike has sin/cos/tan; for atan we use a series-free trick with the
+    #  provided builtins by normalizing — here we give the cosine of the angle.)
+    func cos_angle2(ax, ay, bx, by)
+        var d = dot2(ax, ay, bx, by)
+        var m = mag2(ax, ay) * mag2(bx, by)
+        return d / m
+    end func
+
+    # ---- 3D ----
+
+    func dist3(x1, y1, z1, x2, y2, z2)
+        var dx = x2 - x1
+        var dy = y2 - y1
+        var dz = z2 - z1
+        return sqrt(dx * dx + dy * dy + dz * dz)
+    end func
+
+    func dot3(ax, ay, az, bx, by, bz)
+        return ax * bx + ay * by + az * bz
+    end func
+
+    func mag3(x, y, z)
+        return sqrt(x * x + y * y + z * z)
+    end func
+
+    # 3D cross product -> writes result into out[0..2]
+    func cross3(ax, ay, az, bx, by, bz, out)
+        out[0] = ay * bz - az * by
+        out[1] = az * bx - ax * bz
+        out[2] = ax * by - ay * bx
+        return 0
+    end func
+
+    # ---- polygon / triangle ----
+
+    # triangle area from three 2D points (shoelace)
+    func tri_area(x1, y1, x2, y2, x3, y3)
+        return abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)) / 2.0
+    end func
+
+    # area of a polygon given arrays of x and y coords (shoelace), n vertices
+    func poly_area(x, y, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            var j = i + 1
+            if j >= n
+                j = 0
+            end if
+            s = s + x[i] * y[j] - x[j] * y[i]
+        end for
+        return abs(s) / 2.0
+    end func
+
+    # circle area / circumference
+    func circle_area(r)
+        return 3.14159265358979323846 * r * r
+    end func
+
+    func circle_circ(r)
+        return 6.28318530717958647692 * r
+    end func
+end modul

@@ -1,0 +1,139 @@
+start module; complex
+    # ============================================================
+    #  lib complex — complex number arithmetic.
+    #
+    #  Mike has only doubles, so a complex number is a pair
+    #  (real, imag). Functions take components as separate args and
+    #  write the 2-element result into an output array `out`:
+    #     out[0] = real part,  out[1] = imag part.
+    #
+    #  For arrays of complex numbers (used by lib quantum), we pack
+    #  them interleaved: z[2*k] = real, z[2*k+1] = imag.
+    # ============================================================
+
+    # ---- basic arithmetic (write result into out[0], out[1]) ----
+
+    func c_add(ar, ai, br, bi, out)
+        out[0] = ar + br
+        out[1] = ai + bi
+        return 0
+    end func
+
+    func c_sub(ar, ai, br, bi, out)
+        out[0] = ar - br
+        out[1] = ai - bi
+        return 0
+    end func
+
+    # (ar+ai*i)(br+bi*i) = (ar*br - ai*bi) + (ar*bi + ai*br) i
+    func c_mul(ar, ai, br, bi, out)
+        out[0] = ar * br - ai * bi
+        out[1] = ar * bi + ai * br
+        return 0
+    end func
+
+    # division: multiply by conjugate of denominator
+    func c_div(ar, ai, br, bi, out)
+        var denom = br * br + bi * bi
+        out[0] = (ar * br + ai * bi) / denom
+        out[1] = (ai * br - ar * bi) / denom
+        return 0
+    end func
+
+    # ---- scalar results ----
+
+    # magnitude |z| = sqrt(re^2 + im^2)
+    func c_abs(re, im)
+        return sqrt(re * re + im * im)
+    end func
+
+    # squared magnitude |z|^2 (probability in quantum)
+    func c_abs2(re, im)
+        return re * re + im * im
+    end func
+
+    # argument (phase angle) in radians, via a series-free construction:
+    # we use the identity atan2 through sign handling. Mike lacks atan2,
+    # so we approximate using the relation with the unit circle: for most
+    # quantum work the phase is known analytically, but we provide a
+    # coarse arg via a Taylor-ish fallback for |im/re|.
+    # For robust phase, prefer tracking phase analytically.
+    func c_arg_approx(re, im)
+        # handle axis cases exactly
+        if re == 0.0
+            if im > 0.0
+                return 1.5707963267948966      # +pi/2
+            end if
+            if im < 0.0
+                return -1.5707963267948966     # -pi/2
+            end if
+            return 0.0
+        end if
+        # atan(im/re) via a decent rational approximation, then quadrant fix
+        var t = im / re
+        var at = c_atan(t)
+        if re < 0.0
+            if im >= 0.0
+                return at + 3.141592653589793
+            end if
+            return at - 3.141592653589793
+        end if
+        return at
+    end func
+
+    # atan approximation (good for |t| <= 1; uses reduction for |t|>1)
+    func c_atan(t)
+        var neg = 0.0
+        var x = t
+        if x < 0.0
+            neg = 1.0
+            x = 0.0 - x
+        end if
+        var recip = 0.0
+        if x > 1.0
+            recip = 1.0
+            x = 1.0 / x
+        end if
+        # polynomial approximation of atan on [0,1] (Padé-like)
+        var x2 = x * x
+        var num = x * (0.9998660 + x2 * (-0.3302995 + x2 * (0.1801410 + x2 * (-0.0851330 + x2 * 0.0208351))))
+        var r = num
+        if recip == 1.0
+            r = 1.5707963267948966 - r
+        end if
+        if neg == 1.0
+            r = 0.0 - r
+        end if
+        return r
+    end func
+
+    # ---- conjugate, exp, and polar ----
+
+    func c_conj(re, im, out)
+        out[0] = re
+        out[1] = 0.0 - im
+        return 0
+    end func
+
+    # complex exponential: e^(re + im*i) = e^re * (cos(im) + i sin(im))
+    func c_exp(re, im, out)
+        var mag = exp(re)
+        out[0] = mag * cos(im)
+        out[1] = mag * sin(im)
+        return 0
+    end func
+
+    # from polar: r * (cos(theta) + i sin(theta))
+    func c_polar(r, theta, out)
+        out[0] = r * cos(theta)
+        out[1] = r * sin(theta)
+        return 0
+    end func
+
+    # e^(i*theta) — unit complex, extremely common in quantum phases
+    func c_expi(theta, out)
+        out[0] = cos(theta)
+        out[1] = sin(theta)
+        return 0
+    end func
+end modul

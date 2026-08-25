@@ -1,0 +1,67 @@
+start module; regression
+    # ============================================================
+    #  lib regression — least-squares fitting.
+    #  Results are returned by writing into a small output array `out`.
+    # ============================================================
+
+    # Simple linear regression y = a + b*x on n points.
+    # Writes: out[0] = intercept a, out[1] = slope b, out[2] = R^2.
+    func linreg(x, y, n, out)
+        var sx = 0.0
+        var sy = 0.0
+        var sxx = 0.0
+        var sxy = 0.0
+        var syy = 0.0
+        for i = 0 to n - 1
+            sx = sx + x[i]
+            sy = sy + y[i]
+            sxx = sxx + x[i] * x[i]
+            sxy = sxy + x[i] * y[i]
+            syy = syy + y[i] * y[i]
+        end for
+        var denom = n * sxx - sx * sx
+        var b = (n * sxy - sx * sy) / denom
+        var a = (sy - b * sx) / n
+        # R^2 = (covariance)^2 / (var_x * var_y)
+        var num = n * sxy - sx * sy
+        var r2 = (num * num) / (denom * (n * syy - sy * sy))
+        out[0] = a
+        out[1] = b
+        out[2] = r2
+        return 0
+    end func
+
+    # Predict y from a fitted (a, b): y = a + b*x
+    func predict(a, b, x)
+        return a + b * x
+    end func
+
+    # Mean squared error of a linear fit over the data
+    func mse(x, y, n, a, b)
+        var s = 0.0
+        for i = 0 to n - 1
+            var e = y[i] - (a + b * x[i])
+            s = s + e * e
+        end for
+        return s / n
+    end func
+
+    # Root mean squared error
+    func rmse(x, y, n, a, b)
+        return sqrt(mse(x, y, n, a, b))
+    end func
+
+    # Exponential fit y = A * exp(B*x) via linear regression on ln(y).
+    # Writes out[0] = A, out[1] = B, out[2] = R^2 (in log space).
+    # Requires all y > 0.
+    func expfit(x, y, n, out)
+        var ly = array(n)
+        for i = 0 to n - 1
+            ly[i] = ln(y[i])
+        end for
+        linreg(x, ly, n, out)
+        # out[0] is ln(A); convert back to A
+        out[0] = exp(out[0])
+        return 0
+    end func
+end modul

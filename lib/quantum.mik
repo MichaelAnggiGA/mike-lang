@@ -1,0 +1,224 @@
+start module; quantum
+    # ============================================================
+    #  lib quantum — a state-vector quantum computing simulator.
+    #
+    #  A system of n qubits has 2^n complex amplitudes. We store the
+    #  state as an interleaved array of length 2*2^n:
+    #     state[2*k]   = real part of amplitude k
+    #     state[2*k+1] = imag part of amplitude k
+    #  where k is the basis-state index (0..2^n-1).
+    #
+    #  Requires: lib complex, lib stats (for measurement RNG we use
+    #  the built-in random()), and the built-in math functions.
+    # ============================================================
+
+    # 2^n  (integer power of two)
+    func pow2(n)
+        var r = 1.0
+        var i = 0.0
+        while i < n
+            r = r * 2.0
+            i = i + 1.0
+        end while
+        return r
+    end func
+
+    # ---- state preparation ----
+
+    # initialize an n-qubit register to |00...0>
+    #   state must be array(2 * 2^n). All amplitude 0 except index 0 = 1.
+    func qinit(state, n)
+        var dim = pow2(n)
+        var i = 0.0
+        while i < dim
+            state[2 * i] = 0.0
+            state[2 * i + 1] = 0.0
+            i = i + 1.0
+        end while
+        state[0] = 1.0        # |00..0> amplitude = 1
+        return 0
+    end func
+
+    # ---- single-qubit gate application ----
+    #  Apply a 2x2 gate to qubit q (0 = least significant) of an n-qubit state.
+    #  The gate is given as 4 complex numbers (8 doubles):
+    #    g = [a_re,a_im, b_re,b_im, c_re,c_im, d_re,d_im]
+    #  representing [[a,b],[c,d]].
+    func apply_gate(state, n, q, g)
+        var dim = pow2(n)
+        # bit mask for qubit q
+        var mask = pow2(q)
+        var k = 0.0
+        while k < dim
+            # process only pairs where bit q = 0, partner has bit q = 1
+            var kq = qbit(k, mask)
+            if kq == 0.0
+                var j = k + mask          # partner index
+                # amplitudes: alpha = state[k], beta = state[j]
+                var ar = state[2 * k]
+                var ai = state[2 * k + 1]
+                var br = state[2 * j]
+                var bi = state[2 * j + 1]
+                # new_k = a*alpha + b*beta
+                var nkr = g[0] * ar - g[1] * ai + g[2] * br - g[3] * bi
+                var nki = g[0] * ai + g[1] * ar + g[2] * bi + g[3] * br
+                # new_j = c*alpha + d*beta
+                var njr = g[4] * ar - g[5] * ai + g[6] * br - g[7] * bi
+                var nji = g[4] * ai + g[5] * ar + g[6] * bi + g[7] * br
+                state[2 * k] = nkr
+                state[2 * k + 1] = nki
+                state[2 * j] = njr
+                state[2 * j + 1] = nji
+            end if
+            k = k + 1.0
+        end while
+        return 0
+    end func
+
+    # extract bit: (k AND mask) != 0 ? mask : 0, via floor division
+    #   returns 0.0 if bit clear, mask value if set
+    func qbit(k, mask)
+        # (floor(k / mask)) mod 2
+        var d = floor(k / mask)
+        var half = floor(d / 2.0)
+        var bit = d - 2.0 * half
+        if bit >= 1.0
+            return mask
+        end if
+        return 0.0
+    end func
+
+    # ---- standard gates (fill a 8-double gate array) ----
+
+    # Hadamard: 1/sqrt2 * [[1,1],[1,-1]]
+    func gate_h(g)
+        var s = 1.0 / sqrt(2.0)
+        g[0] = s
+        g[1] = 0.0
+        g[2] = s
+        g[3] = 0.0
+        g[4] = s
+        g[5] = 0.0
+        g[6] = 0.0 - s
+        g[7] = 0.0
+        return 0
+    end func
+
+    # Pauli-X (NOT): [[0,1],[1,0]]
+    func gate_x(g)
+        g[0] = 0.0
+        g[1] = 0.0
+        g[2] = 1.0
+        g[3] = 0.0
+        g[4] = 1.0
+        g[5] = 0.0
+        g[6] = 0.0
+        g[7] = 0.0
+        return 0
+    end func
+
+    # Pauli-Z: [[1,0],[0,-1]]
+    func gate_z(g)
+        g[0] = 1.0
+        g[1] = 0.0
+        g[2] = 0.0
+        g[3] = 0.0
+        g[4] = 0.0
+        g[5] = 0.0
+        g[6] = 0.0 - 1.0
+        g[7] = 0.0
+        return 0
+    end func
+
+    # Pauli-Y: [[0,-i],[i,0]]
+    func gate_y(g)
+        g[0] = 0.0
+        g[1] = 0.0
+        g[2] = 0.0
+        g[3] = 0.0 - 1.0
+        g[4] = 0.0
+        g[5] = 1.0
+        g[6] = 0.0
+        g[7] = 0.0
+        return 0
+    end func
+
+    # Phase gate S: [[1,0],[0,i]]
+    func gate_s(g)
+        g[0] = 1.0
+        g[1] = 0.0
+        g[2] = 0.0
+        g[3] = 0.0
+        g[4] = 0.0
+        g[5] = 0.0
+        g[6] = 0.0
+        g[7] = 1.0
+        return 0
+    end func
+
+    # ---- two-qubit CNOT ----
+    #  control qubit c, target qubit t: flip target when control = 1.
+    func cnot(state, n, c, t)
+        var dim = pow2(n)
+        var cmask = pow2(c)
+        var tmask = pow2(t)
+        var k = 0.0
+        while k < dim
+            # if control bit set and target bit clear, swap with partner
+            var cb = qbit(k, cmask)
+            var tb = qbit(k, tmask)
+            if cb >= 1.0
+                if tb == 0.0
+                    var j = k + tmask
+                    # swap amplitudes k and j
+                    var tr = state[2 * k]
+                    var ti = state[2 * k + 1]
+                    state[2 * k] = state[2 * j]
+                    state[2 * k + 1] = state[2 * j + 1]
+                    state[2 * j] = tr
+                    state[2 * j + 1] = ti
+                end if
+            end if
+            k = k + 1.0
+        end while
+        return 0
+    end func
+
+    # ---- measurement & probabilities ----
+
+    # probability of measuring basis state k = |amplitude_k|^2
+    func prob(state, k)
+        var re = state[2 * k]
+        var im = state[2 * k + 1]
+        return re * re + im * im
+    end func
+
+    # measure the full register: returns a basis-state index (0..dim-1)
+    # sampled according to |amplitude|^2. Uses built-in random().
+    func measure(state, n)
+        var dim = pow2(n)
+        var r = random()
+        var cum = 0.0
+        var k = 0.0
+        while k < dim
+            cum = cum + prob(state, k)
+            if r <= cum
+                return k
+            end if
+            k = k + 1.0
+        end while
+        return dim - 1.0
+    end func
+
+    # total probability (should stay ~1.0 — a sanity/normalization check)
+    func total_prob(state, n)
+        var dim = pow2(n)
+        var s = 0.0
+        var k = 0.0
+        while k < dim
+            s = s + prob(state, k)
+            k = k + 1.0
+        end while
+        return s
+    end func
+end modul

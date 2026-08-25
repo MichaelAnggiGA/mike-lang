@@ -1,0 +1,151 @@
+start module; plot
+    # lib plot — plotting untuk Mike, dua mode:
+    #   1. plot_show(xs, ys, n, xmin, xmax, ymin, ymax)
+    #        -> gambar ASCII langsung di TERMINAL (default, langsung keliatan)
+    #   2. plot_export_line(...) dsb -> tulis SVG ke file (hanya jika diminta)
+    #
+    #  Catatan: fungsi Mike maksimal 8 parameter (xmm0..xmm7). Ukuran kanvas
+    #  ASCII (baris/kolom) dibuat konstan di library agar plot_show cukup 7 arg.
+
+    func plot_rows()  return 16.0 end func
+    func plot_cols()  return 62.0 end func
+
+    # ==========================================================
+    #  MODE 1 — ASCII PLOT DI TERMINAL
+    # ==========================================================
+    func plot_show(xs, ys, n, xmin, xmax, ymin, ymax)
+        var rows = plot_rows()
+        var cols = plot_cols()
+        var r = 0.0
+        while r < rows
+            var yv = ymax - (ymax - ymin) * r / (rows - 1.0)
+            put_num(yv)
+            put_str(" |")
+            var c = 0.0
+            while c < cols
+                var hit = 0.0
+                var k = 0.0
+                while k < n
+                    var cx = (xs[k] - xmin) / (xmax - xmin) * (cols - 1.0)
+                    var cy = (ymax - ys[k]) / (ymax - ymin) * (rows - 1.0)
+                    if abs(cx - c) < 0.5
+                        if abs(cy - r) < 0.5
+                            hit = 1.0
+                        end if
+                    end if
+                    k = k + 1.0
+                end while
+                if hit == 1.0
+                    put_char(42.0)
+                else
+                    put_char(32.0)
+                end if
+                c = c + 1.0
+            end while
+            print ""
+            r = r + 1.0
+        end while
+        # sumbu x
+        put_str("        +")
+        var c2 = 0.0
+        while c2 < cols
+            put_char(45.0)
+            c2 = c2 + 1.0
+        end while
+        print ""
+        put_str("         ")
+        put_num(xmin)
+        put_str("  ...  ")
+        put_num(xmax)
+        print ""
+        return 0
+    end func
+
+    # ==========================================================
+    #  MODE 2 — EXPORT SVG (dipanggil hanya jika perlu)
+    #  Pemanggil buka file dulu: file_open("nama.svg")
+    # ==========================================================
+    func map_x(x, xmin, xmax)
+        return 70.0 + (x - xmin) / (xmax - xmin) * 540.0
+    end func
+    func map_y(y, ymin, ymax)
+        return 40.0 + (1.0 - (y - ymin) / (ymax - ymin)) * 380.0
+    end func
+
+    func svg_head()
+        file_str("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"640\" height=\"480\" ")
+        file_str("viewBox=\"0 0 640 480\" font-family=\"Helvetica,Arial,sans-serif\">\n")
+        file_str("<rect width=\"640\" height=\"480\" fill=\"white\"/>\n")
+        file_str("<rect x=\"70\" y=\"40\" width=\"540\" height=\"380\" fill=\"#fafafa\" stroke=\"#333\"/>\n")
+        return 0
+    end func
+
+    func svg_foot()
+        file_str("</svg>\n")
+        return 0
+    end func
+
+    func svg_axes(xmin, xmax, ymin, ymax)
+        var i = 0.0
+        while i <= 5.0
+            var xv = xmin + (xmax - xmin) * i / 5.0
+            var px = map_x(xv, xmin, xmax)
+            file_str("<line x1=\"")
+            file_num(px)
+            file_str("\" y1=\"40\" x2=\"")
+            file_num(px)
+            file_str("\" y2=\"420\" stroke=\"#ddd\"/>\n")
+            file_str("<text x=\"")
+            file_num(px)
+            file_str("\" y=\"438\" text-anchor=\"middle\" font-size=\"11\" fill=\"#555\">")
+            file_num(xv)
+            file_str("</text>\n")
+            i = i + 1.0
+        end while
+        var j = 0.0
+        while j <= 5.0
+            var yv = ymin + (ymax - ymin) * j / 5.0
+            var py = map_y(yv, ymin, ymax)
+            file_str("<line x1=\"70\" y1=\"")
+            file_num(py)
+            file_str("\" x2=\"610\" y2=\"")
+            file_num(py)
+            file_str("\" stroke=\"#ddd\"/>\n")
+            file_str("<text x=\"63\" y=\"")
+            file_num(py + 4.0)
+            file_str("\" text-anchor=\"end\" font-size=\"11\" fill=\"#555\">")
+            file_num(yv)
+            file_str("</text>\n")
+            j = j + 1.0
+        end while
+        return 0
+    end func
+
+    func svg_line(xs, ys, n, xmin, xmax, ymin, ymax)
+        file_str("<polyline fill=\"none\" stroke=\"steelblue\" stroke-width=\"2\" points=\"")
+        for k = 0 to n - 1
+            file_num(map_x(xs[k], xmin, xmax))
+            file_str(",")
+            file_num(map_y(ys[k], ymin, ymax))
+            file_str(" ")
+        end for
+        file_str("\"/>\n")
+        for k = 0 to n - 1
+            file_str("<circle cx=\"")
+            file_num(map_x(xs[k], xmin, xmax))
+            file_str("\" cy=\"")
+            file_num(map_y(ys[k], ymin, ymax))
+            file_str("\" r=\"3\" fill=\"crimson\"/>\n")
+        end for
+        return 0
+    end func
+
+    func svg_title_open()
+        file_str("<text x=\"320\" y=\"25\" text-anchor=\"middle\" font-size=\"18\" font-weight=\"bold\" fill=\"#222\">")
+        return 0
+    end func
+    func svg_title_close()
+        file_str("</text>\n")
+        return 0
+    end func
+end modul

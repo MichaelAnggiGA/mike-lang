@@ -1,0 +1,263 @@
+start module; finance
+    # ============================================================
+    #  lib finance — financial mathematics with EXPLICIT, tunable
+    #  parameters. Unlike a spreadsheet where conventions are hidden,
+    #  every knob that matters is a named argument you pass in.
+    #
+    #  Core TVM identity (end-of-period / ordinary annuity):
+    #     pv*(1+r)^n + pmt*((1+r)^n - 1)/r + fv = 0
+    #
+    #  Sign convention: cash IN is positive, cash OUT is negative.
+    #  RATE must match the PERIOD: monthly loan -> monthly rate = annual/12.
+    #
+    #  Many functions take a `type` (annuity-due switch):
+    #     type = 0.0  -> payments at END of period   (ordinary; default)
+    #     type = 1.0  -> payments at BEGINNING        (annuity due)
+    # ============================================================
+
+    # ---- helpers ----
+
+    # (1+r)^n via pow (n may be fractional for compounding conversions)
+    func growth(r, n)
+        return pow(1.0 + r, n)
+    end func
+
+    # convert an annual rate to a per-period rate for `m` periods/year
+    #   e.g. per_period(0.12, 12) -> 0.01 monthly
+    func per_period(annual_rate, periods_per_year)
+        return annual_rate / periods_per_year
+    end func
+
+    # ---- time value of money: single lump sum ----
+
+    # Future value of a present lump sum: fv = pv*(1+r)^n
+    func fv_lump(pv, rate, nper)
+        return pv * growth(rate, nper)
+    end func
+
+    # Present value of a future lump sum: pv = fv / (1+r)^n
+    func pv_lump(fv, rate, nper)
+        return fv / growth(rate, nper)
+    end func
+
+    # ---- time value of money: annuities (level payments) ----
+
+    # Future value of a stream of `pmt` payments.
+    #   type: 0 end-of-period, 1 beginning-of-period
+    func fv_annuity(pmt, rate, nper, type)
+        if rate == 0.0
+            return pmt * nper
+        end if
+        var factor = (growth(rate, nper) - 1.0) / rate
+        if type == 1.0
+            factor = factor * (1.0 + rate)
+        end if
+        return pmt * factor
+    end func
+
+    # Present value of a stream of `pmt` payments.
+    func pv_annuity(pmt, rate, nper, type)
+        if rate == 0.0
+            return pmt * nper
+        end if
+        var factor = (1.0 - 1.0 / growth(rate, nper)) / rate
+        if type == 1.0
+            factor = factor * (1.0 + rate)
+        end if
+        return pmt * factor
+    end func
+
+    # Level payment for a loan of `pv` (like Excel PMT).
+    #   Returns a NEGATIVE number (cash out) when pv is positive, by convention.
+    #   type: 0 end-of-period, 1 beginning-of-period
+    func pmt(pv, rate, nper, fv, type)
+        if rate == 0.0
+            return 0.0 - (pv + fv) / nper
+        end if
+        var g = growth(rate, nper)
+        var denom = (g - 1.0) / rate
+        if type == 1.0
+            denom = denom * (1.0 + rate)
+        end if
+        return 0.0 - (pv * g + fv) / denom
+    end func
+
+    # Present value of (loan payment stream + a future balloon fv).
+    func pv_full(pmt_amt, rate, nper, fv, type)
+        return pv_annuity(pmt_amt, rate, nper, type) + pv_lump(fv, rate, nper)
+    end func
+
+    # Number of periods to pay off `pv` with payment `pmt` (both signs matter).
+    #   nper = ln((pmt) / (pmt + pv*rate)) / ln(1+rate)   [end-of-period]
+    func nper(pv, rate, pmt_amt)
+        if rate == 0.0
+            return 0.0 - pv / pmt_amt
+        end if
+        var a = pmt_amt
+        var b = pmt_amt + pv * rate
+        return ln(a / b) / ln(1.0 + rate)
+    end func
+
+    # ---- cash-flow series: NPV / IRR ----
+
+    # Net present value of cash flows cf[0..n-1] discounted at `rate`.
+    #   By convention cf[0] is period-0 (usually the initial outflow, negative)
+    #   and is NOT discounted. cf[i] is discounted by (1+rate)^i.
+    func npv(rate, cf, n)
+        var total = 0.0
+        for i = 0 to n - 1
+            total = total + cf[i] / growth(rate, i)
+        end for
+        return total
+    end func
+
+    # Internal rate of return via bisection on npv() = 0.
+    #   Searches between `lo` and `hi` (e.g. -0.9 and 1.0) with `iters` steps.
+    #   Returns the rate where NPV crosses zero. Robust for conventional flows.
+    func irr(cf, n, lo, hi, iters)
+        var a = lo
+        var b = hi
+        var fa = npv(a, cf, n)
+        var i = 0
+        while i < iters
+            var mid = (a + b) / 2.0
+            var fm = npv(mid, cf, n)
+            if fa * fm <= 0.0
+                b = mid
+            else
+                a = mid
+                fa = fm
+            end if
+            i = i + 1
+        end while
+        return (a + b) / 2.0
+    end func
+
+    # ---- interest rate conversions (tunable compounding) ----
+
+    # Effective annual rate from a nominal rate compounded m times/year.
+    #   ear(0.12, 12) -> 0.126825 (12% nominal, monthly compounding)
+    func ear(nominal, m)
+        return growth(nominal / m, m) - 1.0
+    end func
+
+    # Nominal rate (compounded m/year) that gives a target effective rate.
+    func nominal_from_ear(effective, m)
+        return m * (pow(1.0 + effective, 1.0 / m) - 1.0)
+    end func
+
+    # Continuous-compounding effective rate: e^r - 1
+    func ear_continuous(nominal)
+        return exp(nominal) - 1.0
+    end func
+
+    # ---- growth metrics ----
+
+    # Compound annual growth rate over `years`.
+    func cagr(begin_value, end_value, years)
+        return pow(end_value / begin_value, 1.0 / years) - 1.0
+    end func
+
+    # Rule of 72: approx years to double at rate r (as a percent, e.g. 6.0)
+    func rule_of_72(rate_percent)
+        return 72.0 / rate_percent
+    end func
+
+    # ---- loan amortization ----
+
+    # Interest portion of payment #k (1-based) on a loan, end-of-period.
+    func interest_payment(pv, rate, nper, k)
+        # balance just before payment k = pv*(1+r)^(k-1) - pmt*((1+r)^(k-1)-1)/r
+        var p = pmt(pv, rate, nper, 0.0, 0.0)   # negative
+        var g = growth(rate, k - 1.0)
+        var bal = pv * g + p * (g - 1.0) / rate
+        return bal * rate
+    end func
+
+    # Principal portion of payment #k.
+    func principal_payment(pv, rate, nper, k)
+        var p = pmt(pv, rate, nper, 0.0, 0.0)   # negative (cash out)
+        # payment magnitude minus interest portion
+        return (0.0 - p) - interest_payment(pv, rate, nper, k)
+    end func
+
+    # Remaining balance after `k` payments.
+    func balance_after(pv, rate, nper, k)
+        var p = pmt(pv, rate, nper, 0.0, 0.0)
+        var g = growth(rate, k)
+        return pv * g + p * (g - 1.0) / rate
+    end func
+
+    # ---- depreciation ----
+
+    # Straight-line depreciation per period.
+    func dep_straight(cost, salvage, life)
+        return (cost - salvage) / life
+    end func
+
+    # Declining-balance depreciation expense in year `k` (1-based).
+    #   `factor` tunes the method: 2.0 = double-declining, 1.5 = 150% DB, etc.
+    #   Never depreciates below salvage.
+    func dep_declining(cost, salvage, life, factor, k)
+        var rate = factor / life
+        var book = cost
+        var i = 1.0
+        var expense = 0.0
+        while i <= k
+            expense = book * rate
+            # don't drop below salvage
+            if book - expense < salvage
+                expense = book - salvage
+            end if
+            book = book - expense
+            i = i + 1.0
+        end while
+        return expense
+    end func
+
+    # ---- bonds ----
+
+    # Price of a coupon bond.
+    #   face:        face / par value (e.g. 1000)
+    #   coupon_rate: annual coupon rate (e.g. 0.05)
+    #   ytm:         yield to maturity (annual)
+    #   years:       years to maturity
+    #   freq:        coupon payments per year (1 annual, 2 semiannual)
+    func bond_price(face, coupon_rate, ytm, years, freq)
+        var n = years * freq
+        var c = face * coupon_rate / freq       # coupon per period
+        var r = ytm / freq                      # yield per period
+        var pv_coupons = pv_annuity(c, r, n, 0.0)
+        var pv_face = pv_lump(face, r, n)
+        return pv_coupons + pv_face
+    end func
+
+    # Current yield = annual coupon / current price.
+    func current_yield(face, coupon_rate, price)
+        return face * coupon_rate / price
+    end func
+
+    # Approximate YTM (fast closed-form estimate; exact needs iteration).
+    #   approx = [C + (F - P)/n] / [(F + P)/2]
+    func ytm_approx(face, coupon_rate, price, years)
+        var c = face * coupon_rate
+        return (c + (face - price) / years) / ((face + price) / 2.0)
+    end func
+
+    # ---- returns & risk (pairs with lib stats for volatility) ----
+
+    # Simple holding-period return.
+    func hpr(begin_price, end_price, income)
+        return (end_price - begin_price + income) / begin_price
+    end func
+
+    # Sharpe ratio given a mean return, risk-free rate, and stdev of returns.
+    func sharpe(mean_return, risk_free, stdev_return)
+        return (mean_return - risk_free) / stdev_return
+    end func
+
+    # Real return adjusted for inflation (Fisher equation).
+    func real_return(nominal, inflation)
+        return (1.0 + nominal) / (1.0 + inflation) - 1.0
+    end func
+end modul

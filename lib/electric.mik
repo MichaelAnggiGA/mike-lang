@@ -1,0 +1,149 @@
+start module; electric
+    # ============================================================
+    #  lib electric — electrical & electronics formulas.
+    #  SI units: V (volts), A (amps), Ohm, W (watts), F (farads),
+    #  H (henries), Hz. Pairs with lib science.
+    # ============================================================
+
+    # ---- Ohm's law ----
+
+    # V = I * R
+    func voltage(current, resistance)
+        return current * resistance
+    end func
+
+    # I = V / R
+    func current(voltage_v, resistance)
+        return voltage_v / resistance
+    end func
+
+    # R = V / I
+    func resistance(voltage_v, current_a)
+        return voltage_v / current_a
+    end func
+
+    # ---- power ----
+
+    # P = V * I
+    func power(voltage_v, current_a)
+        return voltage_v * current_a
+    end func
+
+    # P = I^2 * R
+    func power_ir(current_a, resistance)
+        return current_a * current_a * resistance
+    end func
+
+    # P = V^2 / R
+    func power_vr(voltage_v, resistance)
+        return voltage_v * voltage_v / resistance
+    end func
+
+    # ---- resistor networks ----
+
+    # two resistors in series: R = R1 + R2
+    func series2(r1, r2)
+        return r1 + r2
+    end func
+
+    # two resistors in parallel: R = R1*R2/(R1+R2)
+    func parallel2(r1, r2)
+        return r1 * r2 / (r1 + r2)
+    end func
+
+    # n equal resistors in parallel: R = r / n
+    func parallel_equal(r, n)
+        return r / n
+    end func
+
+    # ---- capacitors ----
+
+    # energy stored in a capacitor: E = 0.5*C*V^2
+    func cap_energy(capacitance, voltage_v)
+        return 0.5 * capacitance * voltage_v * voltage_v
+    end func
+
+    # charge on a capacitor: Q = C*V
+    func charge(capacitance, voltage_v)
+        return capacitance * voltage_v
+    end func
+
+    # capacitors in series: C = C1*C2/(C1+C2)
+    func cap_series2(c1, c2)
+        return c1 * c2 / (c1 + c2)
+    end func
+
+    # capacitors in parallel: C = C1 + C2
+    func cap_parallel2(c1, c2)
+        return c1 + c2
+    end func
+
+    # ---- RC / RL time constants ----
+
+    # RC time constant (seconds): tau = R*C
+    func rc_tau(resistance, capacitance)
+        return resistance * capacitance
+    end func
+
+    # RL time constant: tau = L/R
+    func rl_tau(inductance, resistance)
+        return inductance / resistance
+    end func
+
+    # capacitor charging voltage at time t: V(t) = Vs*(1 - e^(-t/RC))
+    func rc_charge(vs, t, resistance, capacitance)
+        var tau = resistance * capacitance
+        return vs * (1.0 - exp(0.0 - t / tau))
+    end func
+
+    # capacitor discharging voltage: V(t) = V0 * e^(-t/RC)
+    func rc_discharge(v0, t, resistance, capacitance)
+        var tau = resistance * capacitance
+        return v0 * exp(0.0 - t / tau)
+    end func
+
+    # ---- AC / reactance ----
+
+    # angular frequency: omega = 2*pi*f
+    func omega(freq)
+        return 6.283185307179586 * freq
+    end func
+
+    # capacitive reactance: Xc = 1/(2*pi*f*C)
+    func reactance_c(freq, capacitance)
+        return 1.0 / (6.283185307179586 * freq * capacitance)
+    end func
+
+    # inductive reactance: Xl = 2*pi*f*L
+    func reactance_l(freq, inductance)
+        return 6.283185307179586 * freq * inductance
+    end func
+
+    # LC resonant frequency: f = 1/(2*pi*sqrt(L*C))
+    func resonance_lc(inductance, capacitance)
+        return 1.0 / (6.283185307179586 * sqrt(inductance * capacitance))
+    end func
+
+    # impedance magnitude of a series RLC: Z = sqrt(R^2 + (Xl-Xc)^2)
+    func impedance_rlc(r, xl, xc)
+        var d = xl - xc
+        return sqrt(r * r + d * d)
+    end func
+
+    # ---- misc ----
+
+    # voltage divider: Vout = Vin * R2/(R1+R2)
+    func voltage_divider(vin, r1, r2)
+        return vin * r2 / (r1 + r2)
+    end func
+
+    # LED series resistor: R = (Vsupply - Vled) / I
+    func led_resistor(v_supply, v_led, current_a)
+        return (v_supply - v_led) / current_a
+    end func
+
+    # decibels (power ratio): dB = 10*log10(P2/P1)
+    func db_power(p2, p1)
+        return 10.0 * log10(p2 / p1)
+    end func
+end modul

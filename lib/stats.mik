@@ -1,0 +1,141 @@
+start module; stats
+    # ============================================================
+    #  lib stats — descriptive statistics, percentiles, Monte Carlo
+    #  Arrays are flat blocks of doubles; pass (array, n).
+    # ============================================================
+
+    func sum(a, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            s = s + a[i]
+        end for
+        return s
+    end func
+
+    func mean(a, n)
+        return sum(a, n) / n
+    end func
+
+    func variance(a, n)
+        var m = mean(a, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            var d = a[i] - m
+            s = s + d * d
+        end for
+        return s / n
+    end func
+
+    # sample variance (divide by n-1)
+    func var_sample(a, n)
+        var m = mean(a, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            var d = a[i] - m
+            s = s + d * d
+        end for
+        return s / (n - 1.0)
+    end func
+
+    func stdev(a, n)
+        return sqrt(variance(a, n))
+    end func
+
+    func stdev_sample(a, n)
+        return sqrt(var_sample(a, n))
+    end func
+
+    func amin(a, n)
+        var m = a[0]
+        for i = 1 to n - 1
+            if a[i] < m
+                m = a[i]
+            end if
+        end for
+        return m
+    end func
+
+    func amax(a, n)
+        var m = a[0]
+        for i = 1 to n - 1
+            if a[i] > m
+                m = a[i]
+            end if
+        end for
+        return m
+    end func
+
+    func range(a, n)
+        return amax(a, n) - amin(a, n)
+    end func
+
+    # in-place insertion sort (ascending)
+    func sort(a, n)
+        for i = 1 to n - 1
+            var key = a[i]
+            var j = i - 1
+            while j >= 0 and a[j] > key
+                a[j + 1] = a[j]
+                j = j - 1
+            end while
+            a[j + 1] = key
+        end for
+        return 0
+    end func
+
+    # percentile p in [0,1] on a SORTED array (linear interpolation)
+    func percentile(a, n, p)
+        var idx = p * (n - 1)
+        var lo = floor(idx)
+        var frac = idx - lo
+        var i = lo
+        if i + 1 >= n
+            return a[n - 1]
+        end if
+        return a[i] + frac * (a[i + 1] - a[i])
+    end func
+
+    func median(a, n)
+        return percentile(a, n, 0.5)
+    end func
+
+    # skewness (population)
+    func skewness(a, n)
+        var m = mean(a, n)
+        var sd = stdev(a, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            var z = (a[i] - m) / sd
+            s = s + z * z * z
+        end for
+        return s / n
+    end func
+
+    # Pearson correlation between two arrays
+    func correlation(x, y, n)
+        var mx = mean(x, n)
+        var my = mean(y, n)
+        var sxy = 0.0
+        var sxx = 0.0
+        var syy = 0.0
+        for i = 0 to n - 1
+            var dx = x[i] - mx
+            var dy = y[i] - my
+            sxy = sxy + dx * dy
+            sxx = sxx + dx * dx
+            syy = syy + dy * dy
+        end for
+        return sxy / sqrt(sxx * syy)
+    end func
+
+    # covariance (population)
+    func covariance(x, y, n)
+        var mx = mean(x, n)
+        var my = mean(y, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            s = s + (x[i] - mx) * (y[i] - my)
+        end for
+        return s / n
+    end func
+end modul
