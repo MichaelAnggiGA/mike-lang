@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Mike",
+  "scopeName": "source.mike",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#builtins" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.mike"
+    },
+    "strings": {
+      "name": "string.quoted.double.mike",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.mike" }
+      ]
+    },
+    "numbers": {
+      "match": "\\b[0-9]+(\\.[0-9]*)?([eE][-+]?[0-9]+)?\\b",
+      "name": "constant.numeric.mike"
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(start|module|modul|end)\\b",
+          "name": "keyword.control.module.mike"
+        },
+        {
+          "match": "\\b(if|else|while|for|to|return)\\b",
+          "name": "keyword.control.mike"
+        },
+        {
+          "match": "\\b(func|var|lib|asm)\\b",
+          "name": "storage.type.mike"
+        },
+        {
+          "match": "\\b(and|or|not)\\b",
+          "name": "keyword.operator.logical.mike"
+        }
+      ]
+    },
+    "builtins": {
+      "match": "\\b(print|input|array|sqrt|exp|ln|log10|sin|cos|tan|floor|ceil|abs|pow|random|seed|rand_range|gauss|csv_load|csv_rows|file_open|file_str|file_num|file_close|put_char|put_str|put_num)\\b",
+      "name": "support.function.builtin.mike"
+    },
+    "operators": {
+      "match": "[-+*/%<>=!]+",
+      "name": "keyword.operator.mike"
+    }
+  }
+}
