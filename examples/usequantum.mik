@@ -1,0 +1,56 @@
+start module; usequantum
+    lib input/output
+    lib complex
+    lib quantum
+
+    func main()
+        print "=== Superposisi: H|0> ==="
+        # 1 qubit, apply Hadamard -> equal superposition
+        var s = array(4)          # 2 * 2^1
+        qinit(s, 1.0)
+        var g = array(8)
+        gate_h(g)
+        apply_gate(s, 1.0, 0.0, g)
+        print "prob |0> (harus 0.5):"
+        print prob(s, 0.0)
+        print "prob |1> (harus 0.5):"
+        print prob(s, 1.0)
+        print "total prob (harus 1):"
+        print total_prob(s, 1.0)
+
+        print "=== Bell state: H pada q0, lalu CNOT(0->1) ==="
+        # 2 qubits -> entangled (|00> + |11>)/sqrt2
+        var b = array(8)          # 2 * 2^2
+        qinit(b, 2.0)
+        gate_h(g)
+        apply_gate(b, 2.0, 0.0, g)
+        cnot(b, 2.0, 0.0, 1.0)
+        print "prob |00> (harus 0.5):"
+        print prob(b, 0.0)
+        print "prob |01> (harus 0):"
+        print prob(b, 1.0)
+        print "prob |10> (harus 0):"
+        print prob(b, 2.0)
+        print "prob |11> (harus 0.5):"
+        print prob(b, 3.0)
+
+        print "=== Pauli-X (NOT): X|0> = |1> ==="
+        var q = array(4)
+        qinit(q, 1.0)
+        gate_x(g)
+        apply_gate(q, 1.0, 0.0, g)
+        print "prob |0> (harus 0):"
+        print prob(q, 0.0)
+        print "prob |1> (harus 1):"
+        print prob(q, 1.0)
+
+        print "=== Ukur Bell state 10x (harusnya cuma 0 atau 3) ==="
+        seed(42.0)
+        var trial = 0
+        while trial < 10
+            print measure(b, 2.0)
+            trial = trial + 1
+        end while
+        return 0
+    end func
+end modul

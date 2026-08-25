@@ -1,0 +1,49 @@
+start module; useeng
+    lib input/output
+    lib mechanic
+    lib electric
+    lib chem
+
+    func main()
+        print "=== MECHANIC ==="
+        print "torque 100N x 0.5m = 50:"
+        print torque(100.0, 0.5)
+        print "power 50Nm @ 3000rpm (W):"
+        print power_from_rpm(50.0, 3000.0)
+        print "gear ratio 60/20 = 3:"
+        print gear_ratio(60.0, 20.0)
+        print "stress 1000N / 0.01m2 = 100000:"
+        print stress(1000.0, 0.01)
+        print "kinetic energy m=2 v=10 = 100:"
+        print kinetic_energy(2.0, 10.0)
+
+        print "=== ELECTRIC ==="
+        print "V = 2A x 5ohm = 10:"
+        print voltage(2.0, 5.0)
+        print "P = 12V x 2A = 24:"
+        print power(12.0, 2.0)
+        print "parallel 10||10 = 5:"
+        print parallel2(10.0, 10.0)
+        print "RC tau 1000ohm x 0.001F = 1:"
+        print rc_tau(1000.0, 0.001)
+        print "LED resistor (5-2)/0.02 = 150:"
+        print led_resistor(5.0, 2.0, 0.02)
+        print "LC resonance L=0.001 C=0.000001:"
+        print resonance_lc(0.001, 0.000001)
+
+        print "=== CHEM ==="
+        print "moles 18g water /18 = 1:"
+        print moles(18.0, 18.0)
+        print "molarity 2mol / 4L = 0.5:"
+        print molarity(2.0, 4.0)
+        print "pH of [H+]=0.001 = 3:"
+        print ph(0.001)
+        print "pOH when pH=3 = 11:"
+        print poh(3.0)
+        print "heat m=100 c=4.18 dT=10:"
+        print heat(100.0, 4.18, 10.0)
+        print "gas pressure n=1 T=300 V=0.0224:"
+        print gas_pressure(1.0, 300.0, 0.0224)
+        return 0
+    end func
+end modul

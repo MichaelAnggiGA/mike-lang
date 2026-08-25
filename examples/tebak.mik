@@ -1,0 +1,27 @@
+start module; tebak
+    lib input/output
+
+    func main()
+        print "Aku mikirin angka 7."
+        var g = input_int "Coba tebak: "
+
+        if g == 7
+            print "Benar!"
+        else
+            if g < 7
+                print "Kekecilan."
+            else
+                print "Kegedean."
+            end if
+        end if
+
+        print "Sekarang hitung mundur dari tebakanmu:"
+        var n = g
+        while n > 0
+            print n
+            n = n - 1
+        end while
+        print "Selesai."
+        return 0
+    end func
+end modul

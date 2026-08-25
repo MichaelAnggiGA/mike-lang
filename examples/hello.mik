@@ -1,0 +1,6 @@
+start module; oke
+    lib input/output
+    func main()
+        print "oke"
+    end func
+end modul

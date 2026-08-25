@@ -1,0 +1,58 @@
+start module; usecrypto
+    lib input/output
+    lib crypto
+
+    func main()
+        print "=== Number theory ==="
+        print "gcd(48, 36) = 12:"
+        print gcd(48.0, 36.0)
+        print "modpow(2, 10, 1000) = 24:"
+        print modpow(2.0, 10.0, 1000.0)
+        print "modinv(3, 11) = 4:"
+        print modinv(3.0, 11.0)
+
+        print "=== Primality ==="
+        print "is_prime(97) = 1:"
+        print is_prime(97.0)
+        print "is_prime(100) = 0:"
+        print is_prime(100.0)
+        print "is_prime_mr(7919) = 1:"
+        print is_prime_mr(7919.0)
+        print "next_prime(100) = 101:"
+        print next_prime(100.0)
+
+        print "=== Diffie-Hellman (p=23, g=5) ==="
+        # Alice secret=6, Bob secret=15
+        var A = dh_public(5.0, 6.0, 23.0)
+        var B = dh_public(5.0, 15.0, 23.0)
+        print "Alice public:"
+        print A
+        print "Bob public:"
+        print B
+        print "Alice's shared:"
+        print dh_shared(B, 6.0, 23.0)
+        print "Bob's shared (harus sama):"
+        print dh_shared(A, 15.0, 23.0)
+
+        print "=== RSA (p=61, q=53) ==="
+        var p = 61.0
+        var q = 53.0
+        var n = rsa_n(p, q)
+        var phi = totient_pq(p, q)
+        var e = rsa_choose_e(phi)
+        var d = rsa_d(e, phi)
+        print "n = p*q:"
+        print n
+        print "e (public exp):"
+        print e
+        print "d (private exp):"
+        print d
+        print "--- enkripsi pesan m=42 ---"
+        var c = rsa_encrypt(42.0, e, n)
+        print "ciphertext:"
+        print c
+        print "decrypt (harus 42):"
+        print rsa_decrypt(c, d, n)
+        return 0
+    end func
+end modul

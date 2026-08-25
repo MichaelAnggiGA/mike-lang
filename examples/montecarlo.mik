@@ -1,0 +1,67 @@
+start module; montecarlo
+    lib input/output
+
+    # Monte Carlo STOIIP: N = 7758 * A * h * phi * (1-Sw) / Boi  (bbl)
+    # Each input drawn from its own distribution -> distribution of volumes.
+
+    func stoiip(area, h, phi, sw, boi)
+        return 7758.0 * area * h * phi * (1.0 - sw) / boi
+    end func
+
+    func mean(a, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            s = s + a[i]
+        end for
+        return s / n
+    end func
+
+    # crude percentile: count fraction below threshold via sorting is heavy,
+    # so we bucket-estimate by sampling sorted-ish. Here we use a simple
+    # selection: fraction of samples <= x. We instead report mean and P-approx
+    # using mean +/- z*sd for a lognormal-ish spread (demonstration).
+
+    func variance(a, n)
+        var m = mean(a, n)
+        var s = 0.0
+        for i = 0 to n - 1
+            var d = a[i] - m
+            s = s + d * d
+        end for
+        return s / n
+    end func
+
+    func main()
+        seed(2024)
+        var trials = 5000
+        var v = array(trials)
+
+        for i = 0 to trials - 1
+            # geological uncertainty per trial
+            var area = rand_range(400.0, 700.0)      # acres
+            var h    = gauss(45.0, 6.0)              # net pay ft
+            var phi  = rand_range(0.18, 0.26)        # porosity
+            var sw   = rand_range(0.25, 0.40)        # water sat
+            var boi  = gauss(1.28, 0.03)             # formation volume factor
+            v[i] = stoiip(area, h, phi, sw, boi) / 1000000.0   # MMSTB
+        end for
+
+        print "Monte Carlo STOIIP (MMSTB), trials:"
+        print trials
+        print "Mean:"
+        print mean(v, trials)
+        print "Std dev:"
+        print sqrt(variance(v, trials))
+
+        # count-based P90/P50/P10 via threshold sweep
+        var m = mean(v, trials)
+        var sd = sqrt(variance(v, trials))
+        print "Approx P90 (mean - 1.28 sd):"
+        print m - 1.28 * sd
+        print "Approx P50 (mean):"
+        print m
+        print "Approx P10 (mean + 1.28 sd):"
+        print m + 1.28 * sd
+        return 0
+    end func
+end modul

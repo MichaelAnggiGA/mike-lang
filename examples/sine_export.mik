@@ -1,0 +1,32 @@
+start module; sine_export
+    lib input/output
+    lib plot
+
+    func main()
+        var n = 40
+        var xs = array(n)
+        var ys = array(n)
+        for i = 0 to n - 1
+            var x = i / 4.0
+            xs[i] = x
+            ys[i] = sin(x)
+        end for
+
+        # tampil di terminal dulu
+        print "=== sin(x) ==="
+        plot_show(xs, ys, n, 0.0, 10.0, -1.0, 1.0)
+
+        # export ke SVG (mode 2)
+        file_open("sine.svg")
+        svg_head()
+        svg_axes(0.0, 10.0, -1.0, 1.0)
+        svg_title_open()
+        file_str("y = sin(x)")
+        svg_title_close()
+        svg_line(xs, ys, n, 0.0, 10.0, -1.0, 1.0)
+        svg_foot()
+        file_close()
+        print "Diekspor ke sine.svg"
+        return 0
+    end func
+end modul

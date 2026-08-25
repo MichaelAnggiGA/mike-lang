@@ -1,0 +1,57 @@
+start module; declinefit
+    lib input/output
+    lib math
+    lib stats
+    lib regression
+
+    # Exponential decline: q = qi * exp(-D * t)  -> ln(q) = ln(qi) - D*t
+    func main()
+        print "=== Production Decline Analysis ==="
+
+        # load interleaved (t, q) pairs from CSV
+        var raw = array(100)
+        var count = csv_load("production.csv", raw)
+        var n = count / 2.0
+
+        # split into time and rate arrays
+        var t = array(50)
+        var q = array(50)
+        for i = 0 to n - 1
+            t[i] = raw[i * 2]
+            q[i] = raw[i * 2 + 1]
+        end for
+
+        print "months of data:"
+        print n
+        print "initial rate (bopd):"
+        print q[0]
+        print "latest rate (bopd):"
+        print q[n - 1]
+
+        # fit exponential decline via regression on ln(q)
+        var res = array(3)
+        expfit(t, q, n, res)
+        var qi = res[0]
+        var D = 0.0 - res[1]
+
+        print "fitted qi (bopd):"
+        print qi
+        print "decline rate D (per month):"
+        print D
+        print "fit R-squared:"
+        print res[2]
+
+        # forecast: rate at month 24
+        print "forecast rate at month 24 (bopd):"
+        print qi * exp(0.0 - D * 24.0)
+
+        # simple EUR proxy: sum forecast over 36 months
+        var eur = 0.0
+        for m = 1 to 36
+            eur = eur + qi * exp(0.0 - D * m) * 30.0
+        end for
+        print "EUR over 36 months (bbl):"
+        print eur
+        return 0
+    end func
+end modul

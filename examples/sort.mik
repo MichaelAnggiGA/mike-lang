@@ -1,0 +1,45 @@
+start module; sort
+    lib input/output
+
+    # in-place insertion sort on a Mike array
+    func sort(a, n)
+        for i = 1 to n - 1
+            var key = a[i]
+            var j = i - 1
+            while j >= 0 and a[j] > key
+                a[j + 1] = a[j]
+                j = j - 1
+            end while
+            a[j + 1] = key
+        end for
+        return 0
+    end func
+
+    # percentile p (0..1) from a sorted array
+    func percentile(a, n, p)
+        var idx = p * (n - 1)
+        var lo = floor(idx)
+        var frac = idx - lo
+        var i = lo
+        return a[i] + frac * (a[i + 1] - a[i])
+    end func
+
+    func main()
+        seed(7)
+        var n = 20
+        var a = array(n)
+        for i = 0 to n - 1
+            a[i] = rand_range(0.0, 100.0)
+        end for
+        sort(a, n)
+        print "sorted min:"
+        print a[0]
+        print "sorted max:"
+        print a[n - 1]
+        print "median (P50):"
+        print percentile(a, n, 0.5)
+        print "P90:"
+        print percentile(a, n, 0.9)
+        return 0
+    end func
+end modul
