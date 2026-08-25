@@ -2,6 +2,9 @@
 
 **A programming language for mathematical computing, compiled to native x86-64.**
 
+A programming language designed by Michael Anggi, with AI-assisted
+implementation, targeting native x86-64.
+
 Mike is a small, readable programming language that compiles `.mik` source code
 directly into a native executable — no interpreter involved. It is designed for
 mathematical, data, and statistical computing, and ships with sixteen ready-to-use
