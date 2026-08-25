@@ -1,8 +1,6 @@
 # Mike
 
-**A lightweight programming language for experimenting with mathematical algorithms.**
-
-**A programming language designed by Michael Anggi, with AI-assisted
+**A lightweight programming language for experimenting with mathematical algorithms. A programming language designed by Michael Anggi, with AI-assisted
 implementation, targeting native x86-64**
 
 Mike is a small, readable programming language that compiles `.mik` source code
