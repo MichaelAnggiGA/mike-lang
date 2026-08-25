@@ -1,6 +1,6 @@
 # Mike
 
-**A programming language for mathematical computing, compiled to native x86-64.**
+**A lightweight programming language for experimenting with mathematical algorithms.**
 
 **A programming language designed by Michael Anggi, with AI-assisted
 implementation, targeting native x86-64**
